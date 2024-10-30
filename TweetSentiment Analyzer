@@ -1,0 +1,47 @@
+import pandas as pd
+import re
+import matplotlib.pyplot as plt
+import seaborn as sns
+from nltk.sentiment import SentimentIntensityAnalyzer
+import nltk
+
+nltk.download('vader_lexicon')
+
+url = "C:/Users/gokul/Downloads/archive (1)/twitter_entity_sentiment_analysis.csv"  
+data = pd.read_csv(url)
+
+print(data.head())
+
+def clean_text(text):
+    text = re.sub(r'http\S+|www\S+|https\S+', '', text, flags=re.MULTILINE)
+    text = re.sub(r'@\w+', '', text)
+    text = re.sub(r'[^a-zA-Z\s]', '', text)
+    return text.lower()
+
+data['cleaned_text'] = data['text'].apply(clean_text)
+
+sia = SentimentIntensityAnalyzer()
+
+def get_sentiment(text):
+    score = sia.polarity_scores(text)
+    if score['compound'] >= 0.05:
+        return 'positive'
+    elif score['compound'] <= -0.05:
+        return 'negative'
+    else:
+        return 'neutral'
+
+data['sentiment'] = data['cleaned_text'].apply(get_sentiment)
+
+print(data['sentiment'].value_counts())
+
+sns.set(style="whitegrid")
+sentiment_counts = data['sentiment'].value_counts()
+
+plt.figure(figsize=(8, 5))
+sns.barplot(x=sentiment_counts.index, y=sentiment_counts.values, palette='viridis')
+plt.title('Sentiment Distribution')
+plt.xlabel('Sentiment')
+plt.ylabel('Count')
+plt.xticks(rotation=45)
+plt.show()
